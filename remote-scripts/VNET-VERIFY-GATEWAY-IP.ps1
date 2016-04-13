@@ -44,7 +44,7 @@ if($isDeployed)
 			foreach ($VM in $allVMData)
 			{
 				LogMsg "Checking Gateway : $($VM.RoleName)"
-				$currentVMGateway = RunLinuxCmd -ip $VM.PublicIP -port $VM.SSHPort -username $user -password $password -command "route" -runAsSudo
+				$currentVMGateway = RunLinuxCmd -ip $VM.PublicIP -port $VM.SSHPort -username $user -password $password -command "netstat -r" -runAsSudo
 				$currentVMDIP = $VM.InternalIP
 				$currentVMDIPSubnet = DetectSubnet -inputString $currentVMDIP -subnet1CIDR $subnet1Range -subnet2CIDR $subnet2Range
 				$currentVMGatewaySubnet = DetectSubnet -inputString $currentVMGateway -subnet1CIDR $subnet1Range -subnet2CIDR $subnet2Range

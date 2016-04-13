@@ -38,7 +38,7 @@ if ($isDeployed)
 			LogMsg "Test Started in $mode mode.."
 			mkdir $LogDir\$mode -ErrorAction SilentlyContinue | out-null
 
-			$server.cmd ="$python_cmd start-server.py -i1 -p $hs1vm1udpport -u yes && mv Runtime.log start-server.py.log -f"
+			$server.cmd ="$python_cmd start-server.py -i1 -p $hs1vm1udpport -u yes && mv -f Runtime.log start-server.py.log"
 
 			if(($mode -eq "IP") -or ($mode -eq "VIP") -or ($mode -eq "DIP"))
 			{

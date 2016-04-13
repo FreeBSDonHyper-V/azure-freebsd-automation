@@ -71,4 +71,21 @@ def RunTest():
         ResultLog.info('FAIL')        
     UpdateState("TestCompleted")
 
-RunTest()
+def RunTestOnFreeBSD():
+    UpdateState("TestRunning")
+    RunLog.info("FreeBSD use label rather than UUID to identify in fstab.")
+    rootLabelFromMount = JustRun("mount | grep 'on / ' | awk '{print $1}'")
+    rootlabelFromfstab = JustRun("cat /etc/fstab | grep 'ufs' | awk '{print $1}'")
+    if (rootLabelFromMount == rootlabelFromfstab):
+        RunLog.info('Label of root partition:' + rootLabelFromMount +'is defined in /etc/fstab.')
+        ResultLog.info("PASS")
+    else:
+        RunLog.info('Label of root partition:' + rootLabelFromMount +'is NOT defined in /etc/fstab.')
+        ResultLog.info("FAIL")
+    UpdateState("TestCompleted")
+
+
+if (IsFreeBSD()):
+    RunTestOnFreeBSD()
+else:
+    RunTest()

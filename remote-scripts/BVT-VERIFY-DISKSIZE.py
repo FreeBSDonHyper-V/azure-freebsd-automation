@@ -17,9 +17,12 @@ expectedDiskSize = args.expected
 def RunTest(expectedSize):
     UpdateState("TestRunning")
     RunLog.info("Checking DiskSize...")
-    osDisk = GetOSDisk()
-    output = Run("fdisk -l | awk '/" + osDisk + "/ {print $5;}' | awk 'NR==1'")
-    ActualSize = float(output)
+    if (IsFreeBSD()):
+        output = Run("df -m | awk '/da0/ {print $2;}' | awk 'NR==1'")
+        ActualSize = float(output)*1024*1024
+    else:
+        output = Run("fdisk -l | awk '/sda/ {print $5;}' | awk 'NR==1'")
+        ActualSize = float(output)
 
     if (ActualSize < expectedSize*1.1 and ActualSize > expectedSize*0.9) :
         RunLog.info('/dev/sda disk size is: %s', output)

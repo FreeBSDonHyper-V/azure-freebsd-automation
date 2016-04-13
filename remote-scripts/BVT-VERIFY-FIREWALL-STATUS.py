@@ -22,4 +22,23 @@ def RunTest():
         ResultLog.error('FAIL')
         UpdateState("TestCompleted")
 
-RunTest()
+        
+def RunTestForBSD():
+    UpdateState("TestRunning")
+    RunLog.info("Checking firewall status")
+    output = Run("cat /etc/rc.conf")
+
+    if ('firewall_enable="YES"' in output or 'pf_enable="YES"' in output or 'ipfilter_enable="YES"' in output) :
+        RunLog.info('Firewall is enabled and the content of /etc/rc.conf is: %s', output)
+        ResultLog.error('FAIL')
+        UpdateState("TestCompleted")
+    else :
+        RunLog.info('Firewall is disabled and the content of /etc/rc.conf is: %s', output)
+        ResultLog.info('PASS')
+        UpdateState("TestCompleted")
+        
+
+if (IsFreeBSD()):
+    RunTestForBSD()
+else:
+    RunTest()

@@ -10,6 +10,12 @@
 #  FEDORA
 DetectDistro()
 {
+uname -a | grep -i "freebsd"
+if [ $? -eq 0 ]; then
+    echo "FreeBSD"
+    exit 0
+fi
+
 while echo $1 | grep ^- > /dev/null; do
     eval $( echo $1 | sed 's/-//g' | tr -d '\012')=$2
     shift

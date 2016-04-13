@@ -9,9 +9,8 @@ Deploy VM's in Azure.
 Execute Test :
 	1.	Login to newly created VM.
 	2.	Get the disk mount information. (Execute-"mount" on the VM)
-	3.	Verify that resource disk is mounted at /mnt.
-		(For Ubuntu: resource disk should be mounted at /mnt/resource).
-	4.	Verify that resource disk format should be ext3 or ext4.
+	3.	Verify that resource disk is mounted at /mnt/resource.
+	4.	Verify that resource disk format should be ufs， zfs， ext3 or ext4.
 
 Cleanup the test VMs.
 	1.	If test is PASS, delete all VMs under test. 
@@ -32,4 +31,4 @@ Edit the XML file used to drive the test
 Run the tests defined in the .xml file.
            From the PowerShell command line, issue the following command:
            Run all BVT tests:
-.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro CentOS -cycleName BVT
+.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro YourDistroName -cycleName BVT

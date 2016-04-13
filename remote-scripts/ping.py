@@ -14,7 +14,7 @@ parser.add_argument('-w', '--wait', help='timeout in seconds for each packet', t
 parser.add_argument('-t', '--ttl', help='time to run ping', type= int)
 args = parser.parse_args()
 
-command = 'ping ' + args.client
+command = 'ping '
 if args.size != None :
         command = command + ' -s' + str(args.size)
 if args.wait != None:
@@ -23,8 +23,8 @@ if args.count != None :
         command = command + ' -c' + str(args.count)
 if args.ttl != None:
         command = command + ' -t' + str(args.ttl)
+command = command + ' ' + args.client
 finalCommand = command + ' >>  ping.log'
-
 
 
 def RunTest(command):

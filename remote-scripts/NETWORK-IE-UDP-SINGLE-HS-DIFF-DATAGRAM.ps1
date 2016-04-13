@@ -31,7 +31,7 @@ if ($isDeployed)
 			try
 			{
 				$testResult = $null
-				$cmd1="$python_cmd start-server.py -p $hs1vm1udpport -u yes && mv Runtime.log start-server.py.log -f"
+				$cmd1="$python_cmd start-server.py -p $hs1vm1udpport -u yes && mv -f Runtime.log start-server.py.log"
 				if ($mode -eq "VIP")
 				{
 					$cmd2="$python_cmd start-client.py -c $hs1vm1IP  -p $hs1vm1udpport -t$iperfTimeoutSeconds -u yes -l $Value" 

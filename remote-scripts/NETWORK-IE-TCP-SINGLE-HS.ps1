@@ -22,7 +22,7 @@ if($isDeployed)
 	$server = CreateIperfNode -nodeIp $hs1VIP -nodeSshPort $hs1vm1sshport -nodeTcpPort $hs1vm1tcpport -nodeIperfCmd $cmd1 -user $user -password $password -files $currentTestData.files -logDir $LogDir
 	$client = CreateIperfNode -nodeIp $hs1VIP -nodeSshPort $hs1vm2sshport -nodeTcpPort $hs1vm2tcpport -nodeIperfCmd $cmd2 -user $user -password $password -files $currentTestData.files -logDir $LogDir
 	$iperfTimeoutSeconds = $currentTestData.iperfTimeoutSeconds
-	$server.cmd = "$python_cmd start-server.py  -i1 -p $hs1vm1tcpport && mv Runtime.log start-server.py.log -f"
+	$server.cmd = "$python_cmd start-server.py  -i1 -p $hs1vm1tcpport && mv -f Runtime.log start-server.py.log"
 
 	foreach ($mode in $currentTestData.TestMode.Split(","))
 	{ 

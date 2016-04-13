@@ -18,9 +18,17 @@ if ($isDeployed)
 
 #		RemoteCopy -uploadTo $hs1VIP -port $hs1vm1sshport -files $currentTestData.files -username $user -password $password -upload
 #		RunLinuxCmd -username $user -password $password -ip $hs1VIP -port $hs1vm1sshport -command "chmod +x *" -runAsSudo
-
-		LogMsg "Executing : $($currentTestData.testScript)"
-		$Output = RunLinuxCmd -username $user -password $password -ip $hs1VIP -port $hs1vm1sshport -command "cat /proc/net/dev | grep eth[0-9] | wc -l"
+        LogMsg "Executing : $($currentTestData.testScript)"
+        $detectedDistro = DetectLinuxDistro -VIP $hs1VIP -SSHport $hs1vm1sshport -testVMUser $user -testVMPassword $password
+        if($detectedDistro -eq "FreeBSD")
+        {
+            $Output = RunLinuxCmd -username $user -password $password -ip $hs1VIP -port $hs1vm1sshport -command "ifconfig | grep hn | wc -l"
+        }
+        else
+        {
+            $Output = RunLinuxCmd -username $user -password $password -ip $hs1VIP -port $hs1vm1sshport -command "cat /proc/net/dev | grep eth[0-9] | wc -l"
+        }
+		
 		LogMsg	"Expected NIC number is: $MaxNic"
 		LogMsg	"Actual NIC number is: $Output"
 		if($Output -eq $MaxNic)

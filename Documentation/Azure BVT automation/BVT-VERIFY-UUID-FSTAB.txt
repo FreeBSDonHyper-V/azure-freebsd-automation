@@ -8,10 +8,10 @@ Deploy VM's in Azure.
 	
 Execute Test :
 	1.	Login to newly created VM.
-	2.	Get the boot messages. (Execute-"dmesg" on the VM)
+	2.	Get the boot messages. (Execute-"mount" on the VM)
 	3.	Get UUID of OS disk.
 	4.	Get fstab information. (Execute-"cat /etc/fstab" on the VM)
-	5.	Verify that UUID from fstab information matches with UUID from dmesg information.
+	5.	Verify that UUID from fstab information matches with UUID from mount information.
 
 Cleanup the test VMs.
 	1.	If test is PASS, delete all VMs under test. 
@@ -32,4 +32,4 @@ Edit the XML file used to drive the test
 Run the tests defined in the .xml file.
            From the PowerShell command line, issue the following command:
            Run all BVT tests:
-.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro CentOS -cycleName BVT
+.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro YourDistroName -cycleName BVT

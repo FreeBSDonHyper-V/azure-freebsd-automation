@@ -30,6 +30,8 @@ def RunTest():
 
 def Restartwaagent():
     distro = platform.dist()
+    if (IsFreeBSD()):
+        Run("echo '"+passwd+"' | sudo -S sed -i .bak s/Logs.Verbose=n/Logs.Verbose=y/g  /etc/waagent.conf")
     if (distro[0] == "CoreOS") :
         Run("echo '"+passwd+"' | sudo -S sed -i s/Logs.Verbose=n/Logs.Verbose=y/g  /usr/share/oem/waagent.conf")
     else :

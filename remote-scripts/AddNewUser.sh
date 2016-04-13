@@ -36,6 +36,10 @@ AddUser()
 			echo -e $newPassword'\n'$newPassword | passwd $newUser
 			isUserAdded=$?
 		fi
+    else
+        pw useradd -n $newUser -s /bin/csh -m
+        echo $newPassword | pw mod user $newUser -h 0
+        isUserAdded=$?
 	fi
 
 	

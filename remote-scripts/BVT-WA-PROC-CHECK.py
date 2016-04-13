@@ -6,7 +6,6 @@ def RunTest(command):
     UpdateState("TestRunning")
     RunLog.info("Checking WALinuxAgent in running processes")
     temp = Run(command)
-    timeout = 0
     output = temp
     if ("waagent" in output) :
                     RunLog.info('waagent service present in running processes')
@@ -14,9 +13,12 @@ def RunTest(command):
                     UpdateState("TestCompleted")
     else:
                     RunLog.error('waagent service absent in running processes')
-                    ResultLog.Error('FAIL')
+                    ResultLog.error('FAIL')
                     UpdateState("TestCompleted")
         
 
-RunTest("ps -ef | grep waagent | grep -v grep")
 
+if (IsFreeBSD()):
+    RunTest("ps -ax | grep waagent | grep -v grep")
+else:
+    RunTest("ps -ef  | grep waagent | grep -v grep")

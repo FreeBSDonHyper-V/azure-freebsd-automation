@@ -51,6 +51,10 @@ if ($isDeployed)
 		{
 			$matchstrings = @("_TEST_UDEV_RULES_SUCCESS")
 		}
+		if ($detectedDistro -imatch "FreeBSD")
+		{
+			$matchstrings = @("_TEST_SUDOERS_VERIFICATION_SUCCESS")
+		}
 	  
 		RemoteCopy -uploadTo $hs1VIP -port $hs1vm1sshport -files $currentTestData.files -username $user -password $password -upload
 		RunLinuxCmd -username $user -password $password -ip $hs1VIP -port $hs1vm1sshport -command "chmod +x *.py" -runAsSudo

@@ -74,6 +74,7 @@ Function DetectLinuxDistro($VIP, $SSHport, $testVMUser, $testVMPassword)
 		$tempout = RemoteCopy  -upload -uploadTo $VIP -port $SSHport -files ".\SetupScripts\DetectLinuxDistro.sh" -username $testVMUser -password $testVMPassword 2>&1 | Out-Null
 		$tempout = RunLinuxCmd -username $testVMUser -password $testVMPassword -ip $VIP -port $SSHport -command "chmod +x *.sh" -runAsSudo 2>&1 | Out-Null
 		$DistroName = RunLinuxCmd -username $testVMUser -password $testVMPassword -ip $VIP -port $SSHport -command "/home/$user/DetectLinuxDistro.sh" -runAsSudo
+		LogMsg "Linux distro detected : $DistroName"	
 		if(($DistroName -imatch "Unknown") -or (!$DistroName))
 		{
 			LogErr "Linux distro detected : $DistroName"
@@ -116,6 +117,10 @@ Function DetectLinuxDistro($VIP, $SSHport, $testVMUser, $testVMPassword)
 			elseif ($DistroName -imatch "COREOS")
 			{
 				$CleanedDistroName = "COREOS"
+			}
+			elseif ($DistroName -imatch "FreeBSD")
+			{
+				$CleanedDistroName = "FreeBSD"
 			}
 			else
 			{
@@ -1222,13 +1227,18 @@ Function SetDistroSpecificVariables($detectedDistro)
 	if(($detectedDistro -eq "SLES") -or ($detectedDistro -eq "SUSE"))
 	{
 		Set-Variable -Name ifconfig_cmd -Value "/sbin/ifconfig" -Scope Global
-		Set-Variable -Name fdisk -Value "/sbin/fdisk" -Scope Global
+		Set-Variable -Name fdisk -Value "/sbin/fdisk  -l" -Scope Global
 		LogMsg "Set `$ifconfig_cmd > $ifconfig_cmd for $detectedDistro"
 		LogMsg "Set `$fdisk > /sbin/fdisk for $detectedDistro"
 	}
-	else
+	elseif($detectedDistro -eq "FreeBSD") 
 	{
-		Set-Variable -Name fdisk -Value "fdisk" -Scope Global
+		Set-Variable -Name fdisk -Value "ls /dev/da*" -Scope Global
+		LogMsg "Set `$fdisk > fdisk for $detectedDistro"
+	}
+    else
+	{
+		Set-Variable -Name fdisk -Value "fdisk  -l" -Scope Global
 		LogMsg "Set `$fdisk > fdisk for $detectedDistro"
 	}
 }
@@ -3614,7 +3624,7 @@ Function IsIperfServerStarted($node, $expectedServerInstances = 1)
 {
 	#RemoteCopy -download -downloadFrom $node.ip -files "/home/$user/start-server.py.log" -downloadTo $node.LogDir -port $node.sshPort -username $node.user -password $node.password
 	LogMsg "Verifying if server is started or not.."
-	$iperfout = RunLinuxCmd -username $node.user -password $node.password -ip $node.ip -port $node.sshPort -command "ps -ef | grep iperf -s | grep -v grep | wc -l" -runAsSudo
+	$iperfout = RunLinuxCmd -username $node.user -password $node.password -ip $node.ip -port $node.sshPort -command "ps -ax | grep iperf -s | grep -v grep | wc -l" -runAsSudo
 	$iperfout = [int]$iperfout[-1].ToString()
 	LogMsg "Total iperf server running instances : $($iperfout)"	
 	if($iperfout -ge $expectedServerInstances)
@@ -3629,7 +3639,7 @@ Function IsIperfServerStarted($node, $expectedServerInstances = 1)
 
 Function IsIperfServerRunning($node)
 {
-	$out = RunLinuxCmd -username $node.user -password $node.password -ip $node.ip -port $node.sshport -command "$python_cmd check-server.py && mv Runtime.log check-server.py.log -f" -runAsSudo
+	$out = RunLinuxCmd -username $node.user -password $node.password -ip $node.ip -port $node.sshport -command "$python_cmd check-server.py && mv -f Runtime.log check-server.py.log" -runAsSudo
 	RemoteCopy -download -downloadFrom $node.ip -files "/home/$user/check-server.py.log, /home/$user/iperf-server.txt" -downloadTo $node.LogDir -port $node.sshPort -username $node.user -password $node.password
 	RemoteCopy -download -downloadFrom $node.ip -files "/home/$user/state.txt, /home/$user/Summary.log" -downloadTo $node.logdir -port $node.sshPort -username $node.user -password $node.password
 	$serverState = Get-Content "$($node.Logdir)\state.txt"
@@ -3650,7 +3660,7 @@ Function IsIperfServerRunning($node)
 Function IsIperfClientStarted($node, [string]$beginningText, [string]$endText)
 {
 	sleep 1
-	$out = RunLinuxCmd -username $node.user -password $node.password -ip $node.ip -port $node.sshPort -command "mv Runtime.log start-client.py.log -f" -runAsSudo
+	$out = RunLinuxCmd -username $node.user -password $node.password -ip $node.ip -port $node.sshPort -command "mv -f Runtime.log start-client.py.log" -runAsSudo
 	RemoteCopy -download -downloadFrom $node.ip -files "/home/$user/start-client.py.log, /home/$user/iperf-client.txt" -downloadTo $node.LogDir -port $node.sshPort -username $node.user -password $node.password
 	RemoteCopy -download -downloadFrom $node.ip -files "/home/$user/state.txt, /home/$user/Summary.log" -downloadTo $node.Logdir -port $node.sshPort -username $node.user -password $node.password
 	$clientState = Get-Content "$($node.Logdir)\state.txt"
@@ -4597,8 +4607,10 @@ Function ConfigureVNETVMs($SSHDetails,$vnetDomainDBFilePath,$dnsServerIP)
 
 #Enable TCP MTU probing, requried for using WS2012 RRAS as VPN device
 #TODO how to check the return value?
-		$suppressedOut = RunLinuxCmd -ip $testIP -port $testPort -username $user -password $password -command "sh -c 'echo 1 >/proc/sys/net/ipv4/tcp_mtu_probing'" -runAsSudo
-
+        if ($detectedDistro -ne "FreeBSD")
+        {
+            $suppressedOut = RunLinuxCmd -ip $testIP -port $testPort -username $user -password $password -command "sh -c 'echo 1 >/proc/sys/net/ipv4/tcp_mtu_probing'" -runAsSudo
+        }
 		LogMsg "$testIP : $testPort configuration finished"
 	}
 }
@@ -5325,7 +5337,7 @@ Function StartIperfServerOnRemoteVM($remoteVM, $intermediateVM, $expectedServerI
 	$DeletePreviousLogs = RunLinuxCmdOnRemoteVM -intermediateVM $intermediateVM -remoteVM $remoteVM -remoteCommand "rm -rf /root/*.txt /root/*.log" -runAsSudo
 	$CommandOutput = RunLinuxCmdOnRemoteVM -intermediateVM $intermediateVM -remoteVM $remoteVM -remoteCommand $NewremoteVMcmd -runAsSudo -RunInBackGround
 	LogMsg "Checking if server started successfully or not ..."
-	$isServerStarted = RunLinuxCmdOnRemoteVM -intermediateVM $intermediateVM -remoteVM $remoteVM -remoteCommand "ps -ef | grep iperf -s | grep -v grep | wc -l" -runAsSudo
+	$isServerStarted = RunLinuxCmdOnRemoteVM -intermediateVM $intermediateVM -remoteVM $remoteVM -remoteCommand "ps -ax | grep iperf -s | grep -v grep | wc -l" -runAsSudo
 	$isServerStarted = [int]$isServerStarted.Split("`n")[1]
 	LogMsg "Total iperf server running instances : $($isServerStarted)"
 	if($isServerStarted -ge $expectedServerInstances)
@@ -5473,15 +5485,29 @@ Function IperfVnetToLocalUdpTest ($vnetAsClient, $localAsServer)
 
 Function GetTotalPhysicalDisks($FdiskOutput)
 {
-	$physicalDiskNames = ("sda","sdb","sdc","sdd","sde","sdf","sdg","sdh","sdi","sdj","sdk","sdl","sdm","sdn",
-			"sdo","sdp","sdq","sdr","sds","sdt","sdu","sdv","sdw","sdx","sdy","sdz", "sdaa", "sdab", "sdac", "sdad","sdae", "sdaf", "sdag", "sdah", "sdai")
+	$physicalDiskNames = ("ad0","ad1","ad2","ad3","ad4","ad5","da0","da1","da2","da3","da4","da5","da6","da7",
+                          "da8","da9","da10","da11","da12","da13","da14","da15","da16","da17","da18","da19","da20",
+                          "sda","sdb","sdc","sdd","sde","sdf","sdg","sdh","sdi","sdj","sdk","sdl","sdm","sdn",
+                          "sdo","sdp","sdq","sdr","sds","sdt","sdu","sdv","sdw","sdx","sdy","sdz", "sdaa", "sdab",
+                          "sdac", "sdad","sdae", "sdaf", "sdag", "sdah", "sdai")
 	$diskCount = 0
+    
 	foreach ($physicalDiskName in $physicalDiskNames)
 	{
-		if ($FdiskOutput -imatch "Disk /dev/$physicalDiskName")
-		{
-			$diskCount += 1
-		}
+        if($detectedDistro -eq "FreeBSD")
+        {
+            $toMatchDiskName  = "/dev/$physicalDiskName"
+        }
+        else
+        {
+            $toMatchDiskName  = "Disk /dev/$physicalDiskName"
+        }
+        
+        if ($FdiskOutput -imatch $toMatchDiskName)
+        {
+            $diskCount += 1
+        }
+
 	}
 	return $diskCount
 }
@@ -5490,11 +5516,24 @@ Function GetNewPhysicalDiskNames($FdiskOutputBeforeAddingDisk, $FdiskOutputAfter
 {
 	$availableDisksBeforeAddingDisk = ""
 	$availableDisksAfterAddingDisk = ""
-	$physicalDiskNames = ("sda","sdb","sdc","sdd","sde","sdf","sdg","sdh","sdi","sdj","sdk","sdl","sdm","sdn",
-			"sdo","sdp","sdq","sdr","sds","sdt","sdu","sdv","sdw","sdx","sdy","sdz", "sdaa", "sdab", "sdac", "sdad","sdae", "sdaf", "sdag", "sdah", "sdai")
-	foreach ($physicalDiskName in $physicalDiskNames)
+	$physicalDiskNames = ("ad0","ad1","ad2","ad3","ad4","ad5","da0","da1","da2","da3","da4","da5","da6","da7",
+                          "da8","da9","da10","da11","da12","da13","da14","da15","da16","da17","da18","da19","da20",
+                          "sda","sdb","sdc","sdd","sde","sdf","sdg","sdh","sdi","sdj","sdk","sdl","sdm","sdn",
+                          "sdo","sdp","sdq","sdr","sds","sdt","sdu","sdv","sdw","sdx","sdy","sdz", "sdaa", "sdab",
+                          "sdac", "sdad","sdae", "sdaf", "sdag", "sdah", "sdai")
+   
+    foreach ($physicalDiskName in $physicalDiskNames)
 	{
-		if ($FdiskOutputBeforeAddingDisk -imatch "Disk /dev/$physicalDiskName")
+        if($detectedDistro -eq "FreeBSD")
+        {
+            $toMatchDiskName  = "/dev/$physicalDiskName"
+        }
+        else
+        {
+            $toMatchDiskName  = "Disk /dev/$physicalDiskName"
+        }
+        
+		if ($FdiskOutputBeforeAddingDisk -imatch $toMatchDiskName)
 		{
 			if ( $availableDisksBeforeAddingDisk -eq "" )
 			{
@@ -5506,9 +5545,19 @@ Function GetNewPhysicalDiskNames($FdiskOutputBeforeAddingDisk, $FdiskOutputAfter
 			}
 		}
 	}
+    
 	foreach ($physicalDiskName in $physicalDiskNames)
 	{
-		if ($FdiskOutputAfterAddingDisk -imatch "Disk /dev/$physicalDiskName")
+        if($detectedDistro -eq "FreeBSD")
+        {
+            $toMatchDiskName  = "/dev/$physicalDiskName"
+        }
+        else
+        {
+            $toMatchDiskName  = "Disk /dev/$physicalDiskName"
+        }
+        
+		if ($FdiskOutputAfterAddingDisk -imatch $toMatchDiskName)
 		{
 			if ( $availableDisksAfterAddingDisk -eq "" )
 			{
@@ -5520,6 +5569,7 @@ Function GetNewPhysicalDiskNames($FdiskOutputBeforeAddingDisk, $FdiskOutputAfter
 			}
 		}
 	}
+    
 	$newDisks = ""
 	foreach ($afterDisk in $availableDisksAfterAddingDisk.Split("^"))
 	{
@@ -5593,11 +5643,19 @@ Function PerformIOTestOnDisk($testVMObject, [string]$attachedDisk, [string]$disk
 		$dmesgBefore = RunLinuxCmd -username $testVMUsername -password $testVMPassword -ip $testVMVIP -port $testVMSSHport -command "dmesg" -runAsSudo 
 		#CREATE A MOUNT DIRECTORY
 		$out = RunLinuxCmd -username $testVMUsername -password $testVMPassword -ip $testVMVIP -port $testVMSSHport -command "mkdir -p $mountPoint" -runAsSudo 
-		$partitionNumber=1
-		$PartitionDiskOut = RunLinuxCmd -username $testVMUsername -password $testVMPassword -ip $testVMVIP -port $testVMSSHport -command "./ManagePartitionOnDisk.sh -diskName $attachedDisk -create yes -forRaid no" -runAsSudo 
-		$FormatDiskOut = RunLinuxCmd -username $testVMUsername -password $testVMPassword -ip $testVMVIP -port $testVMSSHport -command "time mkfs.$diskFileSystem $attachedDisk$partitionNumber" -runAsSudo -runMaxAllowedTime 2400 
-		$out = RunLinuxCmd -username $testVMUsername -password $testVMPassword -ip $testVMVIP -port $testVMSSHport -command "mount -o nobarrier $attachedDisk$partitionNumber $mountPoint" -runAsSudo 
-		Add-Content -Value $formatDiskOut -Path $LogPath -Force
+        if( $detectedDistro -eq "FreeBSD")
+        {
+            $FormatDiskOut = RunLinuxCmd -username $testVMUsername -password $testVMPassword -ip $testVMVIP -port $testVMSSHport -command "newfs $attachedDisk" -runAsSudo -runMaxAllowedTime 2400 
+            $out = RunLinuxCmd -username $testVMUsername -password $testVMPassword -ip $testVMVIP -port $testVMSSHport -command "mount -t ufs $attachedDisk $mountPoint" -runAsSudo 
+        }
+        else
+        {
+            $partitionNumber=1
+            $PartitionDiskOut = RunLinuxCmd -username $testVMUsername -password $testVMPassword -ip $testVMVIP -port $testVMSSHport -command "./ManagePartitionOnDisk.sh -diskName $attachedDisk -create yes -forRaid no" -runAsSudo 
+            $FormatDiskOut = RunLinuxCmd -username $testVMUsername -password $testVMPassword -ip $testVMVIP -port $testVMSSHport -command "time mkfs.$diskFileSystem $attachedDisk$partitionNumber" -runAsSudo -runMaxAllowedTime 2400 
+            $out = RunLinuxCmd -username $testVMUsername -password $testVMPassword -ip $testVMVIP -port $testVMSSHport -command "mount -o nobarrier $attachedDisk$partitionNumber $mountPoint" -runAsSudo 
+		}
+        Add-Content -Value $formatDiskOut -Path $LogPath -Force
 		$ddOut = RunLinuxCmd -username $testVMUsername -password $testVMPassword -ip $testVMVIP -port $testVMSSHport -command "dd if=/dev/zero bs=1024 count=1000000 of=$mountPoint/file_1GB" -runAsSudo -runMaxAllowedTime 1200
 		WaitFor -seconds 10
 		Add-Content -Value $ddOut -Path $LogPath
@@ -5640,7 +5698,7 @@ Function DoHotAddNewDataDiskTest ($testVMObject, [int]$diskSizeInGB )
 		Add-Content  -Value "--------------------ADD DISK TO LUN $testLun : START----------------------" -Path $HotAddLogFile -Encoding UTF8
 #GetCurrentDiskInfo
 
-		$fdiskOutputBeforeAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk -l" -runAsSudo
+		$fdiskOutputBeforeAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk" -runAsSudo
 		Add-Content  -Value "Before Adding New Disk : " -Path $HotAddLogFile -Encoding UTF8
 		Add-Content  -Value $fdiskOutputBeforeAddingDisk -Path $HotAddLogFile -Encoding UTF8
 		$disksBeforeAddingNewDisk = GetTotalPhysicalDisks -FdiskOutput $fdiskOutputBeforeAddingDisk
@@ -5663,7 +5721,7 @@ Function DoHotAddNewDataDiskTest ($testVMObject, [int]$diskSizeInGB )
 				While (($retryCount -le $MaxRetryCount) -and ($newDiskAdded -eq "FAIL"))
 				{
 					LogMsg "Attempt : $retryCount : Checking for new disk."
-					$fdiskOutputAfterAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk -l" -runAsSudo -ignoreLinuxExitCode
+					$fdiskOutputAfterAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk" -runAsSudo -ignoreLinuxExitCode
 					$disksafterAddingNewDisk = GetTotalPhysicalDisks -FdiskOutput $fdiskOutputAfterAddingDisk
 					if ( ($disksBeforeAddingNewDisk + 1) -eq $disksafterAddingNewDisk )
 					{
@@ -5738,7 +5796,7 @@ Function DoHotRemoveDataDiskTest ($testVMObject)
 		Add-Content  -Value "--------------------REMOVE DISK FROM LUN $testLun : START----------------------" -Path $HotRemoveLogFile -Encoding UTF8
 #GetCurrentDiskInfo
 
-		$out = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk -l" -runAsSudo
+		$out = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk" -runAsSudo
 		$disksBeforeRemovingDisk = GetTotalPhysicalDisks -FdiskOutput $out
 		Add-Content  -Value "Before Removing Disk : " -Path $HotRemoveLogFile -Encoding UTF8
 		Add-Content  -Value $out -Path $HotRemoveLogFile  -Encoding UTF8
@@ -5759,7 +5817,7 @@ Function DoHotRemoveDataDiskTest ($testVMObject)
 				{
 					$out = ""
 					LogMsg "Attempt : $retryCount : Verifying removal of disk."
-					$out = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk -l" -runAsSudo -ignoreLinuxExitCode
+					$out = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk" -runAsSudo -ignoreLinuxExitCode
 					$disksafterRemovingDisk = GetTotalPhysicalDisks -FdiskOutput $out
 					if ( ($disksBeforeRemovingDisk - 1) -eq $disksafterRemovingDisk )
 					{
@@ -5819,7 +5877,7 @@ Function DoHotAddNewDataDiskTestParallel ($testVMObject, $TotalLuns)
 		Add-Content  -Value "--------------------ADD $TotalLuns DISKS : START----------------------" -Path $HotAddLogFile -Encoding UTF8
 #GetCurrentDiskInfo
 
-		$FdiskOutputBeforeAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk -l" -runAsSudo
+		$FdiskOutputBeforeAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk" -runAsSudo
 		Add-Content  -Value "Before Adding Disks : " -Path $HotAddLogFile -Encoding UTF8
 		Add-Content  -Value $FdiskOutputBeforeAddingDisk -Path $HotAddLogFile -Encoding UTF8
 		$disksBeforeAddingNewDisk = GetTotalPhysicalDisks -FdiskOutput $FdiskOutputBeforeAddingDisk
@@ -5852,7 +5910,7 @@ Function DoHotAddNewDataDiskTestParallel ($testVMObject, $TotalLuns)
 				{
 					$out = ""
 					LogMsg "Attempt : $retryCount : Checking for new disk."
-					$FdiskOutputAfterAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk -l" -runAsSudo -ignoreLinuxExitCode
+					$FdiskOutputAfterAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk" -runAsSudo -ignoreLinuxExitCode
 					$disksafterAddingNewDisk = GetTotalPhysicalDisks -FdiskOutput $FdiskOutputAfterAddingDisk
 					if ( ($disksBeforeAddingNewDisk + $TotalLuns) -eq $disksafterAddingNewDisk )
 					{
@@ -5948,7 +6006,7 @@ Function DoHotRemoveNewDataDiskTestParallel ($testVMObject, $TotalLuns)
 		Add-Content  -Value "--------------------REMOVE $TotalLuns DISKS : START----------------------" -Path $HotRemoveLogFile -Encoding UTF8
 #GetCurrentDiskInfo
 
-		$out = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk -l" -runAsSudo
+		$out = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk" -runAsSudo
 		Add-Content  -Value "Before Adding Disks : " -Path $HotRemoveLogFile -Encoding UTF8
 		Add-Content  -Value $out -Path $HotRemoveLogFile -Encoding UTF8
 		$disksBeforeRemovingNewDisk = GetTotalPhysicalDisks -FdiskOutput $out
@@ -5983,7 +6041,7 @@ Function DoHotRemoveNewDataDiskTestParallel ($testVMObject, $TotalLuns)
 				{
 					$out = ""
 					LogMsg "Attempt : $retryCount : Checking for new disk."
-					$out = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk -l" -runAsSudo -ignoreLinuxExitCode
+					$out = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk" -runAsSudo -ignoreLinuxExitCode
 					$disksafterRemovingNewDisk = GetTotalPhysicalDisks -FdiskOutput $out
 					if ( ($disksBeforeRemovingNewDisk - $TotalLuns) -eq $disksafterRemovingNewDisk )
 					{
@@ -6043,7 +6101,7 @@ Function DoHotAddExistingDataDiskTest($testVMObject)
 	{
 		Add-Content  -Value "--------------------ADD EXISTING DISK TO LUN $testLun : START----------------------" -Path $HotAddLogFile -Encoding UTF8
 #GetCurrentDiskInfo
-		$fdiskOutputBeforeAddingDisk =  RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk -l" -runAsSudo
+		$fdiskOutputBeforeAddingDisk =  RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk" -runAsSudo
 		Add-Content  -Value "Before Adding Existing Disk : " -Path $HotAddLogFile -Encoding UTF8
 		Add-Content  -Value $fdiskOutputBeforeAddingDisk -Path $HotAddLogFile -Encoding UTF8
 		$disksBeforeAddingNewDisk = GetTotalPhysicalDisks -FdiskOutput $fdiskOutputBeforeAddingDisk
@@ -6065,7 +6123,7 @@ Function DoHotAddExistingDataDiskTest($testVMObject)
 				{
 					$fdiskOutputAfterAddingDisk = ""
 					LogMsg "Attempt : $retryCount : Checking for new disk."
-					$fdiskOutputAfterAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk -l" -runAsSudo -ignoreLinuxExitCode
+					$fdiskOutputAfterAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk" -runAsSudo -ignoreLinuxExitCode
 					$disksafterAddingNewDisk = GetTotalPhysicalDisks -FdiskOutput $fdiskOutputAfterAddingDisk
 					if ( ($disksBeforeAddingNewDisk + 1) -eq $disksafterAddingNewDisk )
 					{
@@ -6145,7 +6203,7 @@ Function DoHotAddExistingDataDiskTestParallel ($testVMObject, $TotalLuns)
 		Add-Content  -Value "--------------------ADD EXISTING $TotalLuns DISKS : START----------------------" -Path $HotAddLogFile -Encoding UTF8
 #GetCurrentDiskInfo
 
-		$FdiskOutputBeforeAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk -l" -runAsSudo
+		$FdiskOutputBeforeAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk" -runAsSudo
 		Add-Content  -Value "Before Adding Disks : " -Path $HotAddLogFile -Encoding UTF8
 		Add-Content  -Value $FdiskOutputBeforeAddingDisk -Path $HotAddLogFile -Encoding UTF8
 		$disksBeforeAddingNewDisk = GetTotalPhysicalDisks -FdiskOutput $FdiskOutputBeforeAddingDisk
@@ -6176,7 +6234,7 @@ Function DoHotAddExistingDataDiskTestParallel ($testVMObject, $TotalLuns)
 				{
 					$FdiskOutputAfterAddingDisk = ""
 					LogMsg "Attempt : $retryCount : Checking for existing disk."
-					$FdiskOutputAfterAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk -l" -runAsSudo -ignoreLinuxExitCode
+					$FdiskOutputAfterAddingDisk = RunLinuxCmd -username $testVMUsername -password $testVMpassword -ip $testVMVIP -port $testVMSSHport -command "$fdisk" -runAsSudo -ignoreLinuxExitCode
 					$disksafterAddingNewDisk = GetTotalPhysicalDisks -FdiskOutput $FdiskOutputAfterAddingDisk
 					if ( ($disksBeforeAddingNewDisk + $TotalLuns) -eq $disksafterAddingNewDisk )
 					{

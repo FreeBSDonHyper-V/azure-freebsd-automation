@@ -11,6 +11,7 @@ done
 
 oldPassword=$oldPassword
 newPassword=$newPassword
+user=$user
 
 UpdatePassword()
 {
@@ -32,6 +33,11 @@ UpdatePassword()
     if [ -e /etc/SuSE-release ]; then
         echo "Changing Password for : SUSE/SLES"
         echo -e $oldPassword'\n'$newPassword'\n'$newPassword | passwd
+        exitVal=$?
+    fi
+    if [ -e /etc/freebsd-update.conf ]; then
+        echo "Changing Password for : FreeBSD"
+        echo $newPassword | pw mod user $user -h 0
         exitVal=$?
     fi
 #    echo "exit Code : $exitVal"

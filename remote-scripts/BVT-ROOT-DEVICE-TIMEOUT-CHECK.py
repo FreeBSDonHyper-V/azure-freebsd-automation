@@ -18,4 +18,7 @@ def RunTest(command):
                     ResultLog.error('FAIL')
                     UpdateState("TestCompleted")
         
-RunTest("cat /sys/block/sda/device/timeout")
+if (IsFreeBSD()):
+    RunTest("sysctl -a | grep kern.cam.da.default_timeout | awk '{print $2}'")
+else:
+    RunTest("cat /sys/block/sda/device/timeout")

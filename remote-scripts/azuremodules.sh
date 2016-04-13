@@ -65,7 +65,7 @@ function updaterepos()
     ditribution=$(detect_linux_ditribution)
     case "$ditribution" in
         oracle|rhel|centos)
-            yum makecache
+            yum -y update
             ;;
     
         ubuntu)
@@ -73,7 +73,7 @@ function updaterepos()
             ;;
          
         suse|opensuse|sles)
-            zypper refresh
+            zypper --non-interactive --gpg-auto-import-keys update
             ;;
          
         *)
@@ -100,7 +100,7 @@ function install_deb ()
 function apt_get_install ()
 {
     package_name=$1
-    DEBIAN_FRONTEND=noninteractive apt-get install -y  --force-yes $package_name
+    apt-get install -y  --force-yes $package_name
     check_exit_status "apt_get_install $package_name"
 }
 
@@ -172,16 +172,9 @@ function remove_partitions ()
 function create_raid_and_mount()
 {
 # Creats RAID using unused data disks attached to the VM.
-    if [[ $# == 3 ]]
-    then
-        local deviceName=$1
-        local mountdir=$2
-        local format=$3
-    else
-        local deviceName="/dev/md1"
-        local mountdir=/data-dir
-        local format="ext4"
-    fi
+    local deviceName=$1
+    local mountdir=$2
+    local format=$3
 
     local uuid=""
     local list=""
@@ -190,7 +183,7 @@ function create_raid_and_mount()
     list=(`fdisk -l | grep 'Disk.*/dev/sd[a-z]' |awk  '{print $2}' | sed s/://| sort| grep -v "/dev/sd[ab]$" `)
 
     lsblk
-    install_package mdadm
+
     echo "--- Raid $deviceName creation started ---"
     (echo y)| mdadm --create $deviceName --level 0 --raid-devices ${#list[@]} ${list[@]}
     check_exit_status "$deviceName Raid creation"
@@ -200,9 +193,10 @@ function create_raid_and_mount()
 
     mkdir $mountdir
     uuid=`blkid $deviceName| sed "s/.*UUID=\"//"| sed "s/\".*\"//"`
+    echo "UUID of RAID device: $uuid"
     echo "UUID=$uuid $mountdir $format defaults 0 2" >> /etc/fstab
     mount $deviceName $mountdir
-    check_exit_status "RAID ($deviceName) mount on $mountdir as $format"
+    check_exit_status "create_raid_and_mount"
 }
 
 function remote_copy ()
@@ -215,14 +209,8 @@ function remote_copy ()
        shift
     done
 
-    if [[ `which sshpass` == "" ]]
-    then
-        echo "sshpass not installed\n Installing now..." 
-        install_package "sshpass" 
-    fi
-
     if [ "x$host" == "x" ] || [ "x$user" == "x" ] || [ "x$passwd" == "x" ] || [ "x$filename" == "x" ] ; then
-       echo "Usage: remote_copy -user <username> -passwd <user password> -host <host ipaddress> -filename <filename> -remote_path <location of the file on remote vm> -cmd <put/get>"
+       echo "Usage: -user <username> -passwd <user password> -host <host ipaddress> -filename <filename> -remote_path <location of the file on remote vm> -cmd <put/get>"
        exit -1
     fi
 
@@ -234,7 +222,8 @@ function remote_copy ()
        destination_path=$user@$host:$remote_path/
     fi
 
-    status=`sshpass -p $passwd scp -o StrictHostKeyChecking=no $source_path $destination_path 2>&1`
+    echo "sshpass -p $passwd scp -v -o StrictHostKeyChecking=no $source_path $destination_path 2>&1"
+    status=`sshpass -p $passwd scp -v -o StrictHostKeyChecking=no $source_path $destination_path 2>&1`
     echo $status
 }
 
@@ -246,52 +235,12 @@ function remote_exec ()
        shift
     done
     cmd=$@
-    if [[ `which sshpass` == "" ]]
-    then
-        echo "sshpass not installed\n Installing now..." 
-        install_package "sshpass" 
-    fi
-
     if [ "x$host" == "x" ] || [ "x$user" == "x" ] || [ "x$passwd" == "x" ] || [ "x$cmd" == "x" ] ; then
-       echo "Usage: remote_exec -user <username> -passwd <user password> -host <host ipaddress> <onlycommand>"
+       echo "Usage: -user <username> -passwd <user password> -host <host ipaddress> <onlycommand>"
        exit -1
     fi
 
-    status=`sshpass -p $passwd ssh -t -o StrictHostKeyChecking=no $user@$host $cmd 2>&1`
+    echo "sshpass -p $passwd ssh -v -o StrictHostKeyChecking=no $user@$host $cmd 2>&1"
+    status=`sshpass -p $passwd ssh -v -o StrictHostKeyChecking=no $user@$host $cmd 2>&1`
     echo $status
-}
-
-function set_user_password {
-    # This routine can set root or any user's password. 
-    if [[ $# == 3 ]]
-    then
-        user=$1
-        user_password=$2
-        sudo_password=$3
-    else
-        echo "Usage: user user_password sudo_password"
-        return -1
-    fi
-
-    hash=$(openssl passwd -1 $user_password)
-
-    string=`echo $sudo_password | sudo -S cat /etc/shadow | grep $user`
-
-    if [ "x$string" == "x" ]
-    then
-        echo "$user not found in /etc/shadow"
-    return -1
-    fi
-
-    IFS=':' read -r -a array <<< "$string"
-    line="${array[0]}:$hash:${array[2]}:${array[3]}:${array[4]}:${array[5]}:${array[6]}:${array[7]}:${array[8]}"
-
-    echo $sudo_password | sudo -S sed -i "s#^${array[0]}.*#$line#" /etc/shadow
-
-    if [ `echo $sudo_password | sudo -S cat /etc/shadow| grep $line|wc -l` != "" ]
-    then
-        echo "Password set succesfully"
-    else
-        echo "failed to set password"
-    fi
 }

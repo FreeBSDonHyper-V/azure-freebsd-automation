@@ -38,4 +38,4 @@ Add following test definition under "<testsDefinition>..</testsDefinition>" in X
 Run the tests defined in the .xml file.
            From the PowerShell command line, issue the following command:
            Run all NETWORK tests:
-.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro CentOS -cycleName NETWORK
+.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro YourDistroName -cycleName NETWORK

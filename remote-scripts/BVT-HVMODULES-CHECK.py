@@ -4,7 +4,11 @@ from azuremodules import *
 
 def RunTest(command):
     UpdateState("TestStarted")
-    hvModules=["hv_storvsc","hv_netvsc","hv_vmbus","hv_utils","hid_hyperv",]
+    if (IsFreeBSD()):
+        hvModules=["hv_utils"]
+        RunLog.info("For FreeBSD 10+, all hyperV modules are integrate in kernel, check module hv_utils is enough.")
+    else:
+        hvModules=["hv_storvsc","hv_netvsc","hv_vmbus","hv_utils","hid_hyperv",]
     totalModules = len(hvModules)
     presentModules = 0
     UpdateState("TestRunning")
@@ -27,4 +31,7 @@ def RunTest(command):
         ResultLog.error('FAIL')
         UpdateState("TestCompleted")
 
-RunTest("lsmod")
+if (IsFreeBSD()):
+    RunTest("kldstat -v | grep hv_utils")
+else:
+    RunTest("lsmod")

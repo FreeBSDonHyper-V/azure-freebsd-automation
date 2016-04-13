@@ -65,7 +65,7 @@ if ($isDeployed)
 		$supressedOut = RunLinuxCmd -username $newUser -password $newPassword1 -ip $hs1VIP -port $hs1vm1sshport -command "chmod +x *"
             try
             {
-    		    $changePassout = RunLinuxCmd -username $newUser -password $newPassword1 -ip $hs1VIP -port $hs1vm1sshport -command "./ChangeUserPassword.sh -oldPassword $newPassword1 -newPassword $newPassword2"
+    		    $changePassout = RunLinuxCmd -username $newUser -password $newPassword1 -ip $hs1VIP -port $hs1vm1sshport -command "./ChangeUserPassword.sh  -user $newUser -oldPassword $newPassword1 -newPassword $newPassword2"  -runAsSudo
                 if ($changePassout -imatch "PASSWORD_CHANGED_SUCCESSFULLY")
                 {
                     LogMsg "Password Changed for user : $newUser"

@@ -23,7 +23,7 @@ if ($isDeployed)
 	$hs1vm2udpport = $allVMData[1].UDPtestPort
 
 	$iperfTimeoutSeconds = $currentTestData.iperfTimeoutSeconds
-	$cmd1="$python_cmd start-server.py -i1 -p $hs1vm1udpport -u yes && mv Runtime.log start-server.py.log -f"
+	$cmd1="$python_cmd start-server.py -i1 -p $hs1vm1udpport -u yes && mv -f Runtime.log start-server.py.log"
 	$cmd2="$python_cmd start-client.py -c $($hs1vm1.IpAddress) -i1 -p $hs1vm1udpport -t$iperfTimeoutSeconds  -P 1 -u yes"
 
 	$server = CreateIperfNode -nodeIp $hs1VIP -nodeSshPort $hs1vm1sshport -nodeUdpPort $hs1vm1udpport -nodeIperfCmd $cmd1 -user $user -password $password -files $currentTestData.files -logDir $LogDir

@@ -51,5 +51,8 @@ def RunTest(command):
 		ResultLog.info('PASS')
 	UpdateState("TestCompleted")
 
-RunTest("swapon -s")
 
+if (IsFreeBSD()):
+    RunTest("swapinfo | grep /dev")
+else:
+    RunTest("swapon -s")

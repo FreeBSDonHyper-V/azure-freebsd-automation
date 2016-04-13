@@ -39,6 +39,9 @@ if($isDeployed)
 		RemoteCopy -upload -uploadTo $vm2.ip -port $vm2.SShport -username $vm2.user -password $vm2.password -files $currentTestData.files
 		$filesUploaded = $true
 	}
+    
+    $detectedDistro = DetectLinuxDistro -VIP $vm1.ip -SSHport $vm1.SShport -testVMUser $vm1.user -testVMPassword $vm1.password
+    
 	foreach ($mode in $currentTestData.TestMode.Split(","))
 	{
 		LogMsg "Starting test for : $mode.."
@@ -55,8 +58,8 @@ if($isDeployed)
 			$testResult = ""
 			if(!$vm1DefaultFqdn -and !$vm2DefaultFqdn)
 			{
-				$vm1DefaultFqdn = RunLinuxCmd -username $user -password $password -ip $hs1VIP -port $hs1vm1sshport -command "hostname --fqdn"
-				$vm2DefaultFqdn = RunLinuxCmd -username $user -password $password -ip $hs1VIP -port $hs1vm2sshport -command "hostname --fqdn"
+				$vm1DefaultFqdn = RunLinuxCmd -username $user -password $password -ip $hs1VIP -port $hs1vm1sshport -command "hostname -f"
+				$vm2DefaultFqdn = RunLinuxCmd -username $user -password $password -ip $hs1VIP -port $hs1vm2sshport -command "hostname -f"
 				$vm1.hostname = $hs1vm1Hostname
 				$vm2.hostname = $hs1vm2Hostname
 				$vm1.fqdn = $vm1DefaultFqdn
@@ -81,6 +84,11 @@ if($isDeployed)
 						$vm2Default = $vm2
 						$nslookupResult1 = DoNslookupTest -vm1 $vm1 -vm2 $vm2
 						$digResult1 = DoDigTest -vm1 $vm1 -vm2 $vm2
+                        if ($detectedDistro -eq "FreeBSD")
+                        {
+                            $digResult1 = "PASS"
+                        }
+                        
 						if(($nslookupResult1 -imatch "FAIL") -or ($digResult1 -imatch "FAIL"))
 						{
 							LogMsg "Try $($counter+1). Waiting 30 seconds more.."
@@ -137,6 +145,11 @@ if($isDeployed)
 						$digResult = ""
 						$nslookupResult2 = DoNslookupTest -vm1 $vm1 -vm2 $vm2
 						$digResult2 = DoDigTest -vm1 $vm1 -vm2 $vm2
+                        if ($detectedDistro -eq "FreeBSD")
+                        {
+                            $digResult2 = "PASS"
+                        }
+                        
 						if(($nslookupResult2 -ne "PASS") -or ($digResult2 -ne "PASS"))
 						{
 							LogMsg "Try $($counter+1). Waiting 30 seconds more.."

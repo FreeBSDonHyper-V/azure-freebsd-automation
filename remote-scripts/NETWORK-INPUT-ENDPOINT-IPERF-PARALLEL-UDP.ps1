@@ -40,7 +40,7 @@ if ($isDeployed)
 			try
 			{
 				$testResult = $null
-				$server.cmd = "$python_cmd start-server.py -i1 -p $hs1vm1udpport -u yes && mv Runtime.log start-server.py.log -f"
+				$server.cmd = "$python_cmd start-server.py -i1 -p $hs1vm1udpport -u yes && mv -f Runtime.log start-server.py.log"
 				LogMsg "Test Started for Parallel Connections $Value in $mode mode.."
 				if(($mode -eq "IP") -or ($mode -eq "VIP") -or ($mode -eq "DIP"))
 				{

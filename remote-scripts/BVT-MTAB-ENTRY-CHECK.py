@@ -3,12 +3,17 @@
 from azuremodules import *
 
 def RunTest(command):
-    UpdateState("TestRunning")
-    RunLog.info("Checking for resource disk entry in /etc/mtab.")
+    if (IsFreeBSD()):
+        RunLog.info("Checking for resource disk entry from mount output on FreeBSD.")
+    else:
+        RunLog.info("Checking for resource disk entry in /etc/mtab.")
     output = Run(command)
     if (IsUbuntu()) :
         mntresource1 = "/dev/sdb1 /mnt"
         mntresource2 = "/dev/sda1 /mnt"
+    elif (IsFreeBSD()):
+            mntresource1 = "/dev/da1s1 on /mnt/resource"
+            mntresource2 = "/dev/da2s1 on /mnt/resource"
     else :
         mntresource1 = "/dev/sdb1 /mnt/resource"
         # There's rare cases that the resource disk is the first disk, it's acceptable as device names are not persistent on Linux
@@ -31,4 +36,7 @@ def RunTest(command):
         ResultLog.error('FAIL')
         UpdateState("TestCompleted")
 
-RunTest("cat /etc/mtab")
+if (IsFreeBSD()):
+    RunTest("mount")
+else:
+    RunTest("cat /etc/mtab")

@@ -8,7 +8,7 @@ Deploy VM's in Azure.
 	
 Execute Test :
 	1.	Login to newly created VM.
-	2.	Get running process details. (Execute-"ps -ef" on the VM)
+	2.	Get running process details. (Execute-"ps -ax" on the VM)
 	3.	Verify that output contains-"waagent" process.
 
 Cleanup the test VMs.
@@ -30,4 +30,4 @@ Edit the XML file used to drive the test
 Run the tests defined in the .xml file.
            From the PowerShell command line, issue the following command:
            Run all BVT tests:
-.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro CentOS -cycleName BVT
+.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro YourDistroName -cycleName BVT

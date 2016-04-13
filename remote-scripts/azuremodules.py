@@ -22,7 +22,7 @@ except ImportError:
     import subprocess as commands
 
 py_ver_str = sys.version
-print(sys.version)
+# print(sys.version)
 
 #THIS LOG WILL COLLECT ALL THE LOGS THAT ARE RUN WHILE THE TEST IS GOING ON...
 RunLog = logging.getLogger("RuntimeLog : ")
@@ -154,6 +154,11 @@ def IsUbuntu():
         cmd = "cat /etc/issue"
         tmp=Run(cmd)
         return ("Ubuntu" in tmp)
+		
+def IsFreeBSD():
+		cmd = "uname -s"
+		tmp = Run(cmd)
+		return ("FreeBSD" in tmp)
 
 def Run(cmd):
         proc=subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
@@ -436,7 +441,10 @@ def StartServer(server):
         for each in str_out :
             #print(each)
             if each == "listening" :
-                iperfPID = Run('pidof iperf')
+                if (IsFreeBSD()):
+            		iperfPID = Run("ps ax | grep iperf | grep -v grep | awk '{print $1}'")
+            	else:
+                	iperfPID = Run('pidof iperf')
                 RunLog.info("Server started successfully. PID : %s", iperfPID)
                 Run('echo "yes" > isServerStarted.txt')
         #UpdateState('TestCompleted')

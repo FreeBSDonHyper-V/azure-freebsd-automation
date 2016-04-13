@@ -47,4 +47,4 @@ Edit the XML file used to drive the test
 Run the tests defined in the .xml file.
             From the PowerShell command line, issue the following command:
            Run all VNET tests:
-.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro CentOS -cycleName VNET
+.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro YourDistroName -cycleName VNET

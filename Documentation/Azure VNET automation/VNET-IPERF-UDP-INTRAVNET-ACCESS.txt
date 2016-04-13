@@ -47,4 +47,4 @@ Automation Run :
 	Run the VNET test cycle defined in the XML file.
 	1.	From the PowerShell command line, issue the following command:
 	2.	Run all VNET tests:
-	.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro CentOS -cycleName VNET
+	.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro YourDistroName -cycleName VNET

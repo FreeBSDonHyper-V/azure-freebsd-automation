@@ -1,5 +1,5 @@
-# azure-linux-automation
-Automation tools for testing Linux images on Microsoft Azure
+# azure-freebsd-automation
+Automation tools for testing Linux/FreeBSD images on Microsoft Azure
 ## Overview
 Azure automation is the project for primarily running the Test Suite in the Windows Azure environment to test the Linux Agent for Windows Azure. Azure automation project is a collection of PowerShell, BASH and python scripts. The test ensures the functionality of Windows Azure Linux Agent and Windows Azure support for different Linux distributions. This test suite focuses on the Build Verification Tests (BVTs), Azure VNET Tests and Network tests. The test environment is composed of a Windows Machine (With Azure PowerShell SDK) and the Virtual Machines on Azure that perform the actual tests.
 ## <a id="prepare"></a>Prepare Your Machine for Automation Cycle
@@ -19,7 +19,7 @@ Azure automation is the project for primarily running the Test Suite in the Wind
           b.  Subscription ID
           
 ### Download Latest Automation Code
-1.  Checkout from https://github.com/Azure/azure-linux-automation.git
+1.  Checkout from https://github.com/FreeBSDonHyper-V/azure-freebsd-automation.git
 
 ### Download Latest Azure PowerShell
 1.	Download Web Platform Installer from : http://go.microsoft.com/fwlink/p/?linkid=320376&clcid=0x409 
@@ -81,7 +81,7 @@ Download 7-zip executable from http://www.7-zip.org/ ( Direct Download Link : ht
     
       Go to Config > Azure > Deployment > Data. Make sure that your "VHD under test" should be present here in one of <Distro>..</Distro> entries. If your VHD is not listed here. Create a new Distro element and add your VHD details.
 
-  Example:
+  Example for ASM:
   ```xml
   <Distro>
     <Name>Distro_Name</Name>
@@ -89,15 +89,23 @@ Download 7-zip executable from http://www.7-zip.org/ ( Direct Download Link : ht
   </Distro>
   ```
   
+  Example for ARM:
+  ```xml
+  <Distro>
+    <Name>Distro_Name</Name>
+    <OsVHD>Distro_OS_VHD_Name_As_Appearing_under_Azure_storage.vhd</OsVHD>
+  </Distro>
+  ```
+  
 3.  Save file.
 
 ### Prepare VHD to work in Azure
-`Applicable if you are uploading your own VHD with Linux OS to Azure.`
+`Applicable if you are uploading your own VHD with Linux/FreeBSD OS to Azure.`
 
-A VHD with Linux OS must be made compatible to work in Azure environment. This includes –
+A VHD with Linux/FreeBSD OS must be made compatible to work in Azure environment. This includes –
 
-        1.	Installation of Linux Integration Services to Linux VM (if already not present)
-        2.	Installation of Windows Azure Linux Agent to Linux VM (if already not installed.)
+        1.	Installation of Linux Integration Services to Linux/FreeBSD VM (if already not present)
+        2.	Installation of Windows Azure Linux Agent to Linux/FreeBSD VM (if already not installed.)
         3.	Installation of minimum required packages. (Applicable if you want to run Tests using Automation code)
 
 Please follow the steps mentioned at: 
@@ -106,7 +114,7 @@ http://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-c
 ### Prepare VHD to work with Automation code.
 `Applicable if you are using already uploaded VHD / Platform Image to run automation.`
 
-To run automation code successfully, you need have following packages installed in your Linux VHD.
+To run automation code successfully, you need have following packages installed in your Linux/FreeBSD VHD.
 
         1.	iperf
         2.	mysql-server
@@ -130,7 +138,7 @@ To run automation code successfully, you need have following packages installed 
 ### Create SSH Key Pair
 `PublicKey.cer – PrivateKey.ppk`
 
-A Linux Virtual machine login can be done with Password authentication or SSH key pair authentication. You must create a Public Key and Private key to run automation successfully. To learn more about how to create SSH key pair, please visit [here](http://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-use-ssh-key/).
+A Linux/FreeBSD Virtual machine login can be done with Password authentication or SSH key pair authentication. You must create a Public Key and Private key to run automation successfully. To learn more about how to create SSH key pair, please visit [here](http://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-use-ssh-key/).
 
 After creating Public Key (.cer) and putty compatible private key (.ppk), you must put it in your `automation_root_folder\ssh\` folder and mention their names in Azure XML file.
 
@@ -154,16 +162,16 @@ Before starting Automation, make sure that you have completed steps in chapter [
         1.	BVT
         2.	NETWORK
         3.	VNET
-        4.	E2E-DISK
-        5.	E2E-TIMESYNC
-        6.	E2E-TIMESYNC-KERNBANCH
-        7.	WORDPRESS1VM
-        8.	WORDPRESS4VM
-        9.	DAYTRADER1VM
-        10.	DAYTRADER4VM
+        4.	E2E
+        5.	DEPLOYMENT
+        6.	EXTENSION
+
 
 #### Command to Start any of the Automation Cycle
-        .\AzureAutomationManager.ps1 -xmlConfigFile .\Azure_ICA_ALL.xml -runtests -email –Distro <DistroName> -cycleName <TestCycleToExecute> 
+    For ASM:
+        .\AzureAutomationManager.ps1 -xmlConfigFile .\Azure_ICA_ALL.xml -runtests –Distro <DistroName> -cycleName <TestCycleToExecute> 
         
+    For ARM:
+        .\AzureAutomationManager.ps1 -xmlConfigFile .\Azure_ICA_ALL.xml -runtests –Distro <DistroName> -cycleName <TestCycleToExecute>  -UseAzureResourceManager
 #### More Information
-For more details, please refer to the documents [here](https://github.com/Azure/azure-linux-automation/tree/master/Documentation).
+For more details, please refer to the documents [here](https://github.com/FreeBSDonHyper-V/azure-freebsd-automation/tree/master/Documentation).

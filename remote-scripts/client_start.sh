@@ -4,21 +4,8 @@
 # Author: Srikanth M
 # Email	: v-srm@microsoft.com
 #
-
-if [[ $# == 2 ]]
-then
-	server_ip=$1
-	username=$2
-else
-	echo "Usage: bash $0 <server_ip> <vm_loginuser>"
-	exit -1
-fi
-
-code_path="/home/$username/code/"
-. $code_path/azuremodules.sh
-
-install_package iperf3
-
+server_ip=$1
+username=$2
 echo "Sleeping 5 mins to get the server ready.."
 sleep 300
 port_number=8001

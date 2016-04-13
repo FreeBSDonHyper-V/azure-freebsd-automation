@@ -29,7 +29,7 @@ if ($isDeployed)
 	LogMsg "Test Machine : $hs1VIP : $hs1vm1sshport"
 	LogMsg "DTAP Machine : $dtapServerIp : $hs1vm1sshport"
 	$iperfTimeoutSeconds = $currentTestData.iperfTimeoutSeconds
-	$cmd1="$python_cmd start-server.py -p $dtapServerUdpport -u yes && mv Runtime.log start-server.py.log -f"
+	$cmd1="$python_cmd start-server.py -p $dtapServerUdpport -u yes && mv -f Runtime.log start-server.py.log"
 	$cmd2="$python_cmd start-client.py -c $dtapServerIp -p $dtapServerUdpport -t$iperfTimeoutSeconds -u yes -l"
 
 	$server = CreateIperfNode -nodeIp $dtapServerIp -nodeSshPort $dtapServerSshport -nodeTcpPort $dtapServerTcpport -nodeIperfCmd $cmd1 -user $user -password $password -files $currentTestData.files -logDir $LogDir

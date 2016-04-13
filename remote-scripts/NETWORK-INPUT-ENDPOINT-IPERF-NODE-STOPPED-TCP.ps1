@@ -37,7 +37,7 @@ if ($isDeployed)
 		{
 			mkdir $LogDir\$mode -ErrorAction SilentlyContinue | out-null
 
-			$server.cmd ="$python_cmd start-server.py -p $hs1vm1tcpport && mv Runtime.log start-server.py.log -f"
+			$server.cmd ="$python_cmd start-server.py -p $hs1vm1tcpport && mv -f Runtime.log start-server.py.log"
 
 			if(($mode -eq "IP") -or ($mode -eq "VIP") -or ($mode -eq "DIP"))
 			{

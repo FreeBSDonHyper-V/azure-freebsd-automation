@@ -14,7 +14,7 @@ Execute Test :
 	2.	Execute "nslookup <hostname of HS1VM2>"
 	3.	Verify nslookup is resolving DIP of HS1VM2.
 	4.	Execute "dig <FQDN of HS1VM2>".
-		Note : To get FQDN of HS1VM2, execute "hostname --fqdn" on HS1VM2.
+		Note : To get FQDN of HS1VM2, execute "cat /etc/resolv.conf | grep search | awk '{print $2}'" on HS1VM2.
 	5.	Verify dig is resolving DIP of HS1VM2.
 	6.	If DIP nslookup & dig scenarios are successful, then mark test as PASS.
 	
@@ -39,4 +39,4 @@ Add following test definition under "<testsDefinition>..</testsDefinition>" in X
 Run the tests defined in the .xml file.
            From the PowerShell command line, issue the following command:
            Run all NETWORK tests:
-.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro CentOS -cycleName NETWORK
+.\AzureAutomationManager.ps1 -xmlConfigFile azure_ica_all.xml -runtests -Distro YourDistroName -cycleName NETWORK

@@ -9,20 +9,11 @@
 # Email	: v-srm@microsoft.com
 #
 #####
-if [[ $# == 2 ]]
-then
-	username=$1
-	test_type=$2
-else
-	echo "Usage: bash $0 <vm_loginuser> <LVM / RAID>"
-	exit -1
-fi
+username=$1
+test_type=$2
 
 mountdir="/dataIOtest"
 code_path="/home/$username/code"
-code_path="/home/$username/code/"
-. $code_path/azuremodules.sh
-
 LOGFILE="${code_path}/iotest.log.txt"
 [ -d $mountdir ] && umount $mountdir && rm -rf $mountdir
 mkdir $mountdir  
@@ -32,9 +23,6 @@ list=(`fdisk -l | grep 'Disk.*/dev/sd[a-z]' |awk  '{print $2}' | sed s/://| sort
 lsblk  >> $LOGFILE
 
 if [ "$test_type" == "LVM" ]; then
-	
-	install_package lvm2
-
 	deviceName="/dev/vg1/lv1"
 	echo "--- LVM $deviceName creation started ---" >> $LOGFILE
 
@@ -72,7 +60,6 @@ if [ "$test_type" == "LVM" ]; then
 	echo "UUID=$uuid $mountdir ext4 defaults,barrier=0 0 2" >> /etc/fstab
 
 elif [ "$test_type" == "RAID" ]; then
-	install_package mdadm
 	count=0
 	while [ "x${list[count]}" != "x" ]
 	do

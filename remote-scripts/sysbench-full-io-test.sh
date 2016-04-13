@@ -18,25 +18,14 @@ FILEIO="--test=fileio --file-total-size=134G --file-extra-flags=dsync --file-fsy
 #All run config set here
 #
 
-if [[ $# == 1 ]]
-then
-	username=$1
-else
-	echo "Usage: bash $0 <vm_loginuser>"
-	exit -1
-fi
+username=$1
+
 code_path="/home/$username/code"
-. $code_path/azuremodules.sh
 mv $code_path/sysbenchlog/ $code_path/sysbenchlog-$(date +"%m%d%Y-%H%M%S")/
 sleep 5
 mkdir $code_path/sysbenchlog
 LOGDIR="${code_path}/sysbenchlog"
 LOGFILE="${LOGDIR}/sysbench.log.txt"
-
-if [[ `which sysbench` == "" ]]
-then
-	install_package sysbench
-fi
 
 echo "uname: -------------------------------------------------" > $LOGFILE
 uname -a 2>&1 >> $LOGFILE
@@ -46,7 +35,6 @@ echo "----------------------------------------------------------" >> $LOGFILE
 echo "Number of CPU cores" `nproc` >> $LOGFILE
 echo "Memory" `free -h| grep Mem| awk '{print $2}'` >> $LOGFILE
 echo "Host Build Version" `dmesg | grep "Host Build" | sed "s/.*Host Build://"| awk '{print  $1}'| sed "s/;//"`  >> $LOGFILE
-echo "Data disks attached" `fdisk -l | grep 'Disk.*/dev/sd[a-z]' |awk  '{print $2}' | sed s/://| sort| grep -v "/dev/sd[ab]$"| wc -l`  >> $LOGFILE
 
 iteration=0
 ioruntime=300
@@ -55,7 +43,6 @@ maxIo=8
 
 #All possible values for file-test-mode are rndrd rndwr rndrw seqrd seqrewr
 modes='rndrd rndwr rndrw seqrd seqrewr'
-#modes='rndrd rndwr rndrw seqrd seqwr seqrewr'
 
 startThread=1
 startIO=1
@@ -80,23 +67,23 @@ echo "=== End Preparation  $(date +"%x %r %Z") ===" >> $LOGFILE
 ####################################
 #Trigger run from here
 for testmode in $modes; do
-	io=$startIO
-	while [ $io -le $maxIo ]
+	Thread=$startThread
+	while [ $Thread -le $maxThread ]
 	do
-		Thread=$startThread
-		while [ $Thread -le $maxThread ]
+		io=$startIO
+		while [ $io -le $maxIo ]
 		do
-			iostatfilename="${LOGDIR}/iostat-sysbench-${testmode}-${io}K-${Thread}.txt"
-			nohup iostat -x 5 -t -y > $iostatfilename &
-			echo "-- iteration ${iteration} ----------------------------- ${testmode}, ${io}K, ${Thread} threads, 5 minutes ------------------ $(date +"%x %r %Z") ---" >> $LOGFILE
-			sysbench $FILEIO --file-test-mode=$testmode --file-block-size=${io}"K" --max-requests=0 --max-time=$ioruntime --num-threads=$Thread run >> $LOGFILE
-			iostatPID=`ps -ef | awk '/iostat/ && !/awk/ { print $2 }'`
-			kill -9 $iostatPID
-			Thread=$(( Thread*2 ))
-		done
+		iostatfilename="${LOGDIR}/iostat-sysbench-${testmode}-${io}K-${Thread}.txt"
+		nohup iostat -x 5 -t -y > $iostatfilename &
+		echo "-- iteration ${iteration} ----------------------------- ${testmode}, ${io}K, ${Thread} threads, 5 minutes ------------------ $(date +"%x %r %Z") ---" >> $LOGFILE
+		sysbench $FILEIO --file-test-mode=$testmode --file-block-size=${io}"K" --max-requests=0 --max-time=$ioruntime --num-threads=$Thread run >> $LOGFILE
+		iostatPID=`ps -ef | awk '/iostat/ && !/awk/ { print $2 }'`
+		kill -9 $iostatPID
 		io=$(( io*2 ))
+		iteration=$(( iteration+1 ))
+		done
+	Thread=$(( Thread*2 ))
 	done
-	iteration=$(( iteration+1 ))
 done
 ####################################
 echo "===================================== Completed Run $(date +"%x %r %Z") script generated 2/9/2015 4:24:44 PM ================================" >> $LOGFILE

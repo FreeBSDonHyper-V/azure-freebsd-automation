@@ -5,18 +5,10 @@
 # Email	: v-srm@microsoft.com
 #
 
-if [[ $# == 3 ]]
-then
-	duration=$1
-	filename=$2
-	username=$3
-else
-	echo "Usage: bash $0 <duration> <filename> <username>"
-	exit -1
-fi
-
+duration=$1
+filename=$2
+username=$3
 code_path="/home/$username/code/"
-. $code_path/azuremodules.sh
 
 capture_cpu(){
 	for i in $(seq 1 $duration)
@@ -37,10 +29,6 @@ capture_connections(){
 		sleep 1
 	done
 }
-
-install_package iperf3
-install_package sysstat
-
 vm_bus_ver=`modinfo hv_vmbus| grep ^version| awk '{print $2}'`
 
 logs_dir=$code_path/logs-`hostname`-`uname -r`-$vm_bus_ver/$filename

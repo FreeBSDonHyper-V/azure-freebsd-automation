@@ -42,8 +42,8 @@ if ($isDeployed)
 	
 	$testPort = $hs1vm1tcpport + 10
 	$pSize = 6
-	$cmd1="$python_cmd start-server.py -p $testPort && mv Runtime.log start-server.py.log -f"
-	$cmd2="$python_cmd start-server.py -p $testPort && mv Runtime.log start-server.py.log -f"
+	$cmd1="$python_cmd start-server.py -p $testPort && mv -f Runtime.log start-server.py.log"
+	$cmd2="$python_cmd start-server.py -p $testPort && mv -f Runtime.log start-server.py.log"
 	$cmd3="$python_cmd start-client.py -c $hs1VIP -p $testPort -t10 -P$pSize"
 	$cmd11="$python_cmd start-server-without-stopping.py -p $hs1vm1ProbePort -log iperf-probe.txt"
 	$cmd22="$python_cmd start-server-without-stopping.py -p $hs1vm2ProbePort -log iperf-probe.txt"
