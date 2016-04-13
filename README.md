@@ -199,3 +199,24 @@ Before starting Automation, make sure that you have completed steps in chapter [
         .\AzureAutomationManager.ps1 -xmlConfigFile .\Azure_ICA_ALL.xml -runtests –Distro <DistroName> -cycleName <TestCycleToExecute>  -UseAzureResourceManager
 #### More Information
 For more details, please refer to the documents [here](https://github.com/FreeBSDonHyper-V/azure-freebsd-automation/tree/master/Documentation).
+
+#### Known issues
+	The below cases can fail:
+
+	BVT-VERIFY-NO-ERROR-IN-LOGS: expected on 11-CURRENT -- we have a few warning/error message in the logs.
+	BVT-VERIFY-BOOT-ERROR-WARNINGS : expected on 11-CURRENT -- we have a few warning/error message in 'dmesg'.
+	BVT-HVMODULES-CHECK: expected on 11-CURRENT. We're fixing the test case.
+
+	(we're analyzing the below cases:)
+	BVT-MTAB-ENTRY-CHECK
+	BVT-RESOURCE-DISK-FILESYSTEM
+	BVT-VERIFY-MNT-RESOURCE-WRITABLE
+	NETWORK-LB-CUSTOMPROBE-SAME-PORT-IPERF-PARALLEL-TCP
+	NETWORK-LB-CUSTOMPROBE-SAME-PORT-ONE-NODE-DOWN-TCP
+	NETWORK-LB-CUSTOMPROBE-SAME-PORT-TWO-NODES-DOWN-TCP
+	NETWORK-LB-NO-PROBE-PORT-IPERF-TCP-PARALLEL
+	NETWORK-LB-CUSTOMPROBE-OTHER-PORT-IPERF-TCP
+	NETWORK-LB-CUSTOMPROBE-OTHER-PORT-IPERF-PARALLEL-TCP
+	NETWORK-LB-CUSTOMPROBE-OTHER-PORT-ONE-NODE-DOWN-TCP
+	NETWORK-LB-CUSTOMPROBE-OTHER-PORT-TWO-NODES-DOWN-TCP
+	NETWORK-IDNS-SINGLEHS-CHANGED-HOSTNAME
