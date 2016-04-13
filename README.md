@@ -1,28 +1,24 @@
 # azure-freebsd-automation
-Automation tools for testing Linux/FreeBSD images on Microsoft Azure
+Automation tools for testing FreeBSD images on Microsoft Azure
 ## Overview
-Azure automation is the project for primarily running the Test Suite in the Windows Azure environment to test the Linux Agent for Windows Azure. Azure automation project is a collection of PowerShell, BASH and python scripts. The test ensures the functionality of Windows Azure Linux Agent and Windows Azure support for different Linux distributions. This test suite focuses on the Build Verification Tests (BVTs), Azure VNET Tests and Network tests. The test environment is composed of a Windows Machine (With Azure PowerShell SDK) and the Virtual Machines on Azure that perform the actual tests.
+Azure automation is the project for primarily running the Test Suite in the Azure environment. Azure automation project is a collection of PowerShell, BASH and python scripts. The test ensures the functionality of Azure Agent and Azure support for different FreeBSD/Linux distributions. This test suite focuses on the Build Verification Tests (BVTs), Azure VNET Tests and Network tests. The test environment is composed of a Windows host machine (with Azure PowerShell SDK) and the Virtual Machines on Azure that perform the actual tests.
 ## <a id="prepare"></a>Prepare Your Machine for Automation Cycle
 ### Prerequisite
 1.  You must have a Windows Machine with PowerShell. Tested Platforms:
 
-          a.  Windows 7x64
-          b.  Windows 8x64
-          c.  Server 2008
-          d.  Server 2012
-          e.  Server 2012 R2
-          
+          a.  Server 2012 R2
+
 2.  You must be connected to Internet.
-3.  You must have a valid Windows Azure Subscription.
+3.  You must have a valid Azure Subscription.
 
           a.  Subscription Name
           b.  Subscription ID
-          
+
 ### Download Latest Automation Code
 1.  Checkout from https://github.com/FreeBSDonHyper-V/azure-freebsd-automation.git
 
 ### Download Latest Azure PowerShell
-1.	Download Web Platform Installer from : http://go.microsoft.com/fwlink/p/?linkid=320376&clcid=0x409 
+1.	Download Web Platform Installer from : http://go.microsoft.com/fwlink/p/?linkid=320376&clcid=0x409
 2.	Start Web Platform Installer and select Azure PowerShell and proceed for Azure PowerShell Installation.
 
 ### Authenticate Your Machine with Your Azure Subscription
@@ -30,7 +26,7 @@ There are two ways to authenticate your machine with your subscription.
 
 1.	Azure AD method
 
-      This creates a 12 Hours temporary session in PowerShell, in that session, you are allowed to run Windows Azure Cmdlets to control / use your subscription. After 12 hours you will be asked to enter username and password of your subscription. This may create problems long running automations, hence we use certificate method.
+      This creates a 12 Hours temporary session in PowerShell, in that session, you are allowed to run Azure Cmdlets to control / use your subscription. After 12 hours you will be asked to enter username and password of your subscription. This may create problems long running automations, hence we use certificate method.
 
 2.	Certificate Method.
 
@@ -76,9 +72,9 @@ Download 7-zip executable from http://www.7-zip.org/ ( Direct Download Link : ht
     <AffinityGroup></AffinityGroup>
   </General>
   ```
-      
+
 2.	Add VHD details in XML File.
-    
+
       Go to Config > Azure > Deployment > Data. Make sure that your "VHD under test" should be present here in one of <Distro>..</Distro> entries. If your VHD is not listed here. Create a new Distro element and add your VHD details.
 
   Example for ASM:
@@ -88,7 +84,7 @@ Download 7-zip executable from http://www.7-zip.org/ ( Direct Download Link : ht
     <OsImage>Distro_OS_Image_Name_As_Appearing_under_Azure_OS_Images</OsImage>
   </Distro>
   ```
-  
+
   Example for ARM:
   ```xml
   <Distro>
@@ -96,49 +92,77 @@ Download 7-zip executable from http://www.7-zip.org/ ( Direct Download Link : ht
     <OsVHD>Distro_OS_VHD_Name_As_Appearing_under_Azure_storage.vhd</OsVHD>
   </Distro>
   ```
-  
+
 3.  Save file.
 
 ### Prepare VHD to work in Azure
-`Applicable if you are uploading your own VHD with Linux/FreeBSD OS to Azure.`
+`Applicable if you are uploading your own VHD with FreeBSD/Linux OS to Azure.`
 
-A VHD with Linux/FreeBSD OS must be made compatible to work in Azure environment. This includes –
+A VHD with FreeBSD/Linux OS must be made compatible to work in Azure environment. This includes –
 
-        1.	Installation of Linux Integration Services to Linux/FreeBSD VM (if already not present)
-        2.	Installation of Windows Azure Linux Agent to Linux/FreeBSD VM (if already not installed.)
+        1.	Installation of FreeBSD/Linux Integration Services to FreeBSD/Linux VM (if not present)
+        2.	Installation of Azure Agent to FreeBSD/Linux VM (if not installed.)
         3.	Installation of minimum required packages. (Applicable if you want to run Tests using Automation code)
 
-Please follow the steps mentioned at: 
+Please follow the steps mentioned at:
 http://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-create-upload-vhd/
 
 ### Prepare VHD to work with Automation code.
-`Applicable if you are using already uploaded VHD / Platform Image to run automation.`
+`Applicable if you are using an existing uploaded VHD / Platform Image to run automation.`
 
-To run automation code successfully, you need have following packages installed in your Linux/FreeBSD VHD.
+To run automation code successfully, you need to install the following packages in your FreeBSD/Linux VHD:
 
-        1.	iperf
-        2.	mysql-server
-        3.	mysql-client
-        4.	gcc
-        5.	gcc-c++
-        6.	bind
-        7.	bind-utils
-        8.	bind9
-        9.	python
-        10.	python-pyasn1
-        11.	python-argparse
-        12.	python-crypto
-        13.	python-paramiko
-        14.	libstdc++6
-        15.	psmisc
-        16.	nfs-utils
-        17.	nfs-common
-        18.	tcpdump
+	pkg install python27
+	ln -s /usr/local/bin/python2.7 /usr/bin/python
+	echo "y" | pkg install Security/py-paramiko
+	echo "y" | pkg install Py27-setuptools27
+	
+	
+	echo "y" | pkg install bash
+	ln -s /usr/local/bin/bash /bin/bash
+	echo "y" | pkg install sudo
+	echo "y" | pkg install unix2dos
+	echo "y" | pkg install wget
+	echo "y" | pkg install iperf
+	echo "y" | pkg install bind-tools
+	echo "y" | pkg install base64
+	echo "y" | pkg install gcc
+	echo "y" | pkg install psmisc
+	echo "y" | pkg install tcpdump
+	echo "y" | pkg install git
+	echo "y" | pkg install ca_root_nss
+	mv /etc/ssl/cert.pem /etc/ssl/cert.pem.old
+	ln -s /usr/local/share/certs/ca-root-nss.crt /etc/ssl/cert.pem
+
+
+### Some useful notes to install the Azure agent
+	git clone https://github.com/karataliu/WALinuxAgent.git
+	cd WALinuxAgent
+	git branch --remote
+	git checkout 2.1 
+	python setup.py install
+	ln -sf /usr/local/sbin/waagent /usr/sbin/waagent
+	ln -sf /usr/local/sbin/waagent2.0 /usr/sbin/waagent2.0
+	chmod a+x  /usr/sbin/waagent
+	chmod a+x  /usr/sbin/waagent2.0
+	chmod a+x  /etc/rc.d/waagent
+	/usr/sbin/waagent -version
+	echo "y" | waagent -deprovision+user
+	echo  'waagent_enable="YES"' >> /etc/rc.conf 
+ 
+
+### Some useful notes to create the user 'bsduser'
+	#To add a user called bsduser, run
+	pw useradd -n bsduser -s /bin/csh -m
+    	echo "the_passwd_of_bsduser" | pw mod user bsduser  -h 0
+
+	#next we should add 'bsduser' into the group 'wheel' and enable the full sudo permission for it (e.g., uncomment out "%wheel ALL=(ALL) NOPASSWD: ALL" in /usr/local/etc/sudoers)
+
 
 ### Create SSH Key Pair
 `PublicKey.cer – PrivateKey.ppk`
 
-A Linux/FreeBSD Virtual machine login can be done with Password authentication or SSH key pair authentication. You must create a Public Key and Private key to run automation successfully. To learn more about how to create SSH key pair, please visit [here](http://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-use-ssh-key/).
+A FreeBSD/Linux Virtual machine login can be done with Password authentication or SSH key pair authentication. You must create a Public Key and Private key to run automation successfully. To learn more about how to create SSH key pair, please visit [here](http://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-use-ssh-key/).
 
 After creating Public Key (.cer) and putty compatible private key (.ppk), you must put it in your `automation_root_folder\ssh\` folder and mention their names in Azure XML file.
 
@@ -169,8 +193,8 @@ Before starting Automation, make sure that you have completed steps in chapter [
 
 #### Command to Start any of the Automation Cycle
     For ASM:
-        .\AzureAutomationManager.ps1 -xmlConfigFile .\Azure_ICA_ALL.xml -runtests –Distro <DistroName> -cycleName <TestCycleToExecute> 
-        
+        .\AzureAutomationManager.ps1 -xmlConfigFile .\Azure_ICA_ALL.xml -runtests –Distro <DistroName> -cycleName <TestCycleToExecute>
+
     For ARM:
         .\AzureAutomationManager.ps1 -xmlConfigFile .\Azure_ICA_ALL.xml -runtests –Distro <DistroName> -cycleName <TestCycleToExecute>  -UseAzureResourceManager
 #### More Information
